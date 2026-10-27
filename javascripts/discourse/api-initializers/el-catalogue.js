@@ -1,0 +1,37 @@
+import { apiInitializer } from "discourse/lib/api";
+import ElCatalogueHeaderLinks from "../components/el-catalogue-header-links";
+import store, { catalogueUrl } from "../lib/catalogue-store";
+
+export default apiInitializer((api) => {
+  // A full page load of /c/catalogue?view=collections (e.g. a shared link or
+  // a new tab) opens on that view. Read it now, before Discourse's router
+  // strips the unknown query parameter.
+  const view = new URLSearchParams(window.location.search).get("view");
+  if (view) {
+    store.setView(view);
+  }
+
+  if (settings.show_header_links) {
+    api.renderInOutlet("before-header-panel", ElCatalogueHeaderLinks);
+  }
+
+  if (settings.show_menu_link) {
+    api.addCommunitySectionLink({
+      name: "library-catalogue",
+      href: catalogueUrl(settings.category_slug),
+      title: "Browse the library catalogue",
+      text: "Library catalogue",
+      icon: "book",
+    });
+  }
+
+  // Start downloading as soon as anyone lands on the site, so the catalogue
+  // is usually ready by the time they click through to it.
+  const warm = () =>
+    store.ensureLoaded(settings.data_url, settings.refresh_after_minutes);
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(warm, { timeout: 5000 });
+  } else {
+    setTimeout(warm, 2000);
+  }
+});

@@ -1,0 +1,39 @@
+data_url:
+  default: "https://script.google.com/macros/s/AKfycbwc6_ayfxFmXXZoaJRV1GGTdxfsOI5MHnmx6KyoQOjHYHD1GPMZdWRqygBB72YaSS67/exec?page=catalogue-data"
+  description: "The Apps Script web app URL that returns the catalogue as JSON (ends in ?page=catalogue-data)."
+
+category_slug:
+  default: "catalogue"
+  description: "Slug of the Discourse category whose page shows the catalogue instead of a topic list."
+
+show_header_links:
+  default: true
+  description: "Show the two catalogue links in the site header. While they are shown, the page's own Books / Collections tabs only appear on phones."
+
+books_label:
+  default: "Browse books"
+  description: "Label for the books header link and tab."
+
+collections_label:
+  default: "Browse collections"
+  description: "Label for the collections header link and tab."
+
+mobile_label:
+  default: "Catalogue"
+  description: "On phones the header has room for one link, which uses this label and opens the catalogue (with its books / collections tabs)."
+
+show_menu_link:
+  default: true
+  description: "Also add a 'Library catalogue' link to the Community section of the menu (handy on phones)."
+
+refresh_after_minutes:
+  type: integer
+  default: 5
+  min: 0
+  description: "Visitors see their last downloaded copy instantly; a fresh copy is fetched in the background once it is older than this many minutes."
+
+svg_icons:
+  type: list
+  list_type: compact
+  default: "book"
+  description: "Icons this component uses, so Discourse includes them in the icon set."

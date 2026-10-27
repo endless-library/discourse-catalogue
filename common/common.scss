@@ -1,0 +1,746 @@
+// Endless Library catalogue: native Discourse version of the public catalogue.
+// Colours come from the site's colour scheme, so dark mode works too.
+
+.el-catalogue,
+.el-book-modal,
+.el-header-links {
+  --el-ink: var(--primary);
+  --el-muted: var(--primary-medium);
+  --el-rule: var(--primary-low);
+  --el-hover: var(--primary-very-low);
+  --el-bg: var(--secondary);
+  --el-serif: Georgia, "Times New Roman", serif;
+}
+
+// ── Catalogue category page: hide the forum chrome around the list ──────────
+body.category-#{$category_slug} {
+  .list-controls,
+  #header-list-area,
+  .discovery-layout__category-header,
+  .category-heading {
+    display: none;
+  }
+}
+
+// ── Header links ────────────────────────────────────────────────────────────
+.el-header-links {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 100%;
+  padding-inline: 1rem;
+  min-width: 0;
+
+  .el-header-link {
+    padding: 0.4em 0.8em;
+    color: var(--el-ink);
+    font-size: var(--font-0);
+    white-space: nowrap;
+    border-radius: var(--d-button-border-radius, 4px);
+    text-decoration: none;
+
+    &:hover,
+    &:focus-visible {
+      background: var(--el-hover);
+      color: var(--el-ink);
+    }
+
+    &.is-active {
+      background: var(--el-ink);
+      color: var(--el-bg);
+    }
+  }
+
+  .el-header-link--mobile {
+    display: none;
+  }
+}
+
+// Keep the site logo from being squeezed by the links.
+.d-header .home-logo-wrapper-outlet:has(~ .before-header-panel-outlet .el-header-links) {
+  flex-shrink: 0;
+}
+
+// Inside a topic the header shows the topic title in the same spot.
+.d-header:has(.extra-info-wrapper) .el-header-links {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .el-header-links {
+    padding-inline: 0.5rem;
+
+    .el-header-link {
+      padding: 0.4em 0.6em;
+    }
+
+    .el-header-link--wide {
+      display: none;
+    }
+
+    .el-header-link--mobile {
+      display: inline-block;
+    }
+  }
+}
+
+// Very narrow phones: no room at all; the menu link and home page list remain.
+@media (max-width: 360px) {
+  .el-header-links {
+    display: none;
+  }
+}
+
+// ── Page ───────────────────────────────────────────────────────────────────
+.el-catalogue {
+  color: var(--el-ink);
+  padding: 0.5rem 0 3rem;
+}
+
+// Zero-specificity resets so the component classes below always win.
+:where(.el-catalogue, .el-book-modal) button {
+  font: inherit;
+  color: inherit;
+}
+
+:where(.el-catalogue) ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.el-btn {
+  font-size: var(--font-down-1);
+  border: 1px solid var(--el-ink);
+  background: var(--el-bg);
+  padding: 0.35em 1em;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background 0.1s;
+
+  &:hover {
+    background: var(--el-hover);
+  }
+
+  &.is-active {
+    background: var(--el-ink);
+    color: var(--el-bg);
+  }
+}
+
+// Tabs
+.el-tabs {
+  display: flex;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--el-ink);
+  margin-bottom: 1.5rem;
+}
+
+.el-tab {
+  font-family: var(--el-serif);
+  font-size: var(--font-up-2);
+  font-style: italic;
+  background: none;
+  border: none;
+  padding: 0.5rem 0;
+  margin-bottom: -1px;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  color: var(--el-muted);
+
+  &:hover {
+    color: var(--el-ink);
+  }
+
+  &.is-active {
+    color: var(--el-ink);
+    border-bottom-color: var(--el-ink);
+  }
+}
+
+// The header links do the same job on wider screens (matches the 600px header
+// breakpoint above, where the header switches to a single link).
+@media (min-width: 601px) {
+  .el-catalogue--header-nav .el-tabs {
+    display: none;
+  }
+
+  .el-catalogue--header-nav {
+    padding-top: 1.5rem;
+  }
+}
+
+// Search
+.el-search {
+  margin-bottom: 1.5rem;
+}
+
+.el-search__bar {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--el-ink);
+  background: var(--el-bg);
+}
+
+.el-search__input[type="search"] {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-up-1);
+  border: none;
+  outline: none;
+  box-shadow: none;
+  margin: 0;
+  padding: 0.8em 1em;
+  height: auto;
+  background: transparent;
+  color: var(--el-ink);
+
+  &:focus {
+    border: none;
+    box-shadow: none;
+    outline: none;
+  }
+
+  &::-webkit-search-cancel-button {
+    display: none;
+  }
+}
+
+.el-search__bar:focus-within {
+  outline: 2px solid var(--tertiary);
+  outline-offset: 1px;
+}
+
+.el-search__clear {
+  background: none;
+  border: none;
+  padding: 0 1em;
+  cursor: pointer;
+  color: var(--el-muted);
+
+  &:hover {
+    color: var(--el-ink);
+  }
+}
+
+.el-adv-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: var(--font-down-1);
+  color: var(--el-muted);
+  background: none;
+  border: none;
+  padding: 0.25em 0;
+  margin-top: 0.5rem;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--el-ink);
+  }
+
+  &.is-open .el-adv-toggle__arrow {
+    transform: rotate(180deg);
+  }
+}
+
+.el-adv-toggle__arrow {
+  display: inline-block;
+  font-size: 0.7em;
+  transition: transform 0.2s;
+}
+
+.el-adv {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 0.75rem 1rem;
+  border: 1px solid var(--el-rule);
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.el-adv__field {
+  display: block;
+  margin: 0;
+
+  > span {
+    display: block;
+    font-size: var(--font-down-2);
+    color: var(--el-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.25rem;
+  }
+
+  input,
+  select {
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+  }
+}
+
+.el-adv__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+// Results bar
+.el-results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.el-results-meta {
+  margin: 0;
+  font-size: var(--font-down-1);
+  color: var(--el-muted);
+}
+
+.el-view-toggle {
+  display: flex;
+
+  .el-btn + .el-btn {
+    margin-left: -1px;
+  }
+}
+
+// Covers
+.el-covers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 1.5rem 1rem;
+}
+
+.el-cover {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: center;
+  cursor: pointer;
+
+  &:hover .el-cover__img,
+  &:focus-visible .el-cover__img {
+    border-color: var(--el-ink);
+  }
+
+  &:hover .el-cover__title {
+    text-decoration: underline;
+  }
+}
+
+.el-cover__img {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border: 1px solid var(--el-rule);
+  background: var(--el-hover);
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  transition: border-color 0.12s;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  // Books without a usable cover show their title on a plain card.
+  &:not(:has(img))::after,
+  &.is-broken::after {
+    content: attr(data-title);
+    font-family: var(--el-serif);
+    font-style: italic;
+    font-size: var(--font-down-1);
+    line-height: 1.35;
+    color: var(--el-muted);
+    padding: 0.75rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 6;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &.is-broken img {
+    display: none;
+  }
+}
+
+.el-cover__title {
+  font-family: var(--el-serif);
+  font-size: var(--font-down-1);
+  line-height: 1.3;
+  margin-bottom: 0.2rem;
+}
+
+.el-cover__author {
+  font-size: var(--font-down-2);
+  color: var(--el-muted);
+}
+
+.el-covers--skeleton .el-cover__img {
+  animation: el-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes el-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+// List
+.el-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
+    padding: 0 0.75rem 0.4rem 0;
+    border-bottom: 1px solid var(--el-ink);
+    font-weight: normal;
+    font-size: var(--font-down-2);
+    color: var(--el-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+
+    button {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      text-transform: inherit;
+      letter-spacing: inherit;
+      color: inherit;
+
+      &:hover {
+        color: var(--el-ink);
+      }
+    }
+  }
+
+  td {
+    padding: 0.6rem 0.75rem 0.6rem 0;
+    border-bottom: 1px solid var(--el-rule);
+    vertical-align: top;
+    line-height: 1.35;
+  }
+
+  tbody tr {
+    cursor: pointer;
+
+    &:hover td {
+      background: var(--el-hover);
+    }
+  }
+}
+
+.el-sort {
+  font-size: 0.75em;
+  margin-left: 0.2em;
+}
+
+.el-table__title {
+  font-family: var(--el-serif);
+  font-style: italic;
+  font-size: var(--font-up-1);
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.el-table__author {
+  color: var(--el-muted);
+}
+
+.el-table__meta {
+  color: var(--el-muted);
+  font-size: var(--font-down-1);
+}
+
+.el-more {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0 0;
+}
+
+.el-state {
+  color: var(--el-muted);
+  padding: 2rem 0;
+  margin: 0;
+}
+
+.el-state--error p {
+  margin: 0 0 0.5rem;
+}
+
+.el-state__detail {
+  font-size: var(--font-down-1);
+}
+
+// Collections
+.el-collections__filter[type="search"] {
+  width: 100%;
+  margin: 0 0 1.25rem;
+  border-radius: 0;
+}
+
+.el-coll {
+  border-bottom: 1px solid var(--el-rule);
+
+  &:first-child {
+    border-top: 1px solid var(--el-rule);
+  }
+
+  &.is-open {
+    border-bottom-color: var(--el-ink);
+  }
+}
+
+.el-coll__row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) 1fr auto;
+  align-items: baseline;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.75rem 0.25rem;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--el-hover);
+  }
+}
+
+.el-coll__name {
+  font-family: var(--el-serif);
+  font-style: italic;
+  font-size: var(--font-up-1);
+}
+
+.el-coll__preview,
+.el-coll__count {
+  font-size: var(--font-down-1);
+  color: var(--el-muted);
+}
+
+.el-coll__preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.el-coll__count {
+  white-space: nowrap;
+}
+
+.el-coll__books {
+  padding: 0.25rem 0 1rem 1rem;
+  margin-left: 0.25rem;
+  border-left: 1px solid var(--el-rule);
+}
+
+.el-coll__book {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0.35rem 0;
+  cursor: pointer;
+
+  &:hover .el-coll__book-title {
+    text-decoration: underline;
+  }
+
+  &.is-historical {
+    opacity: 0.55;
+  }
+}
+
+.el-coll__book-title {
+  font-family: var(--el-serif);
+  font-style: italic;
+}
+
+.el-coll__book-author {
+  color: var(--el-muted);
+  font-size: var(--font-down-1);
+  margin-left: 0.5em;
+}
+
+.el-coll__subhead {
+  font-size: var(--font-down-2);
+  color: var(--el-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 0.75rem 0 0.25rem;
+}
+
+.el-coll__all {
+  margin-top: 0.75rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--font-down-1);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+// ── Book detail modal ──────────────────────────────────────────────────────
+.el-book-modal {
+  .d-modal__container {
+    max-width: 40rem;
+  }
+
+  .d-modal__title-text {
+    font-family: var(--el-serif);
+    font-style: italic;
+  }
+}
+
+.el-book {
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+.el-book__cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 2 / 3;
+  border: 1px solid var(--el-rule);
+  background: var(--el-hover);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &:not(:has(img))::after,
+  &.is-broken::after {
+    content: attr(data-title);
+    font-family: var(--el-serif);
+    font-style: italic;
+    font-size: var(--font-down-1);
+    color: var(--el-muted);
+    text-align: center;
+    padding: 0.75rem;
+  }
+
+  &.is-broken img {
+    display: none;
+  }
+}
+
+.el-book__meta {
+  margin: 0;
+}
+
+.el-book__row {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--el-rule);
+
+  dt {
+    flex: 0 0 6rem;
+    font-size: var(--font-down-2);
+    color: var(--el-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding-top: 0.15em;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.el-book__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.el-pill {
+  font-size: var(--font-down-2);
+  border: 1px solid var(--el-rule);
+  background: none;
+  padding: 0.15em 0.6em;
+  color: var(--el-muted);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--el-ink);
+    color: var(--el-ink);
+  }
+
+  &.is-active {
+    border-color: var(--el-ink);
+    color: var(--el-ink);
+    font-weight: 600;
+  }
+}
+
+.el-book__note {
+  margin: 0.75rem 0 0;
+  font-size: var(--font-down-1);
+  color: var(--el-muted);
+}
+
+// ── Small screens ──────────────────────────────────────────────────────────
+@media (max-width: 700px) {
+  .el-covers {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem 0.65rem;
+  }
+
+  .el-table .el-table__meta {
+    display: none;
+  }
+
+  .el-coll__row {
+    grid-template-columns: 1fr auto;
+  }
+
+  .el-coll__preview {
+    display: none;
+  }
+
+  .el-book {
+    grid-template-columns: 7rem 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 420px) {
+  .el-book {
+    grid-template-columns: 1fr;
+
+    .el-book__cover {
+      width: 9rem;
+    }
+  }
+}

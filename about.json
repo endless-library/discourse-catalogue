@@ -1,0 +1,11 @@
+{
+  "name": "Endless Library Catalogue",
+  "component": true,
+  "authors": "Endless Library",
+  "about_url": null,
+  "license_url": null,
+  "theme_version": "1.0.0",
+  "minimum_discourse_version": "3.4.0",
+  "assets": {},
+  "modifiers": {}
+}
