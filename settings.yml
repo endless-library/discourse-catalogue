@@ -35,5 +35,39 @@ refresh_after_minutes:
 svg_icons:
   type: list
   list_type: compact
-  default: "book"
+  default: "book|id-card|screwdriver-wrench|up-right-from-square"
   description: "Icons this component uses, so Discourse includes them in the icon set."
+
+# ── Membership link ──────────────────────────────────────────────────────────
+show_membership_link:
+  default: true
+  description: "Show a membership link in the header (on phones too) and in the menu. It reads 'New membership' for people who aren't members and 'My membership' for people who are."
+
+membership_group:
+  default: "members"
+  description: "Name of the Discourse group the subscriptions plugin adds paying members to. Being in this group is what switches the link to 'My membership'. The group's visibility must let its own members see it (anything except 'group owners and staff')."
+
+new_membership_label:
+  default: "New membership"
+  description: "Link text for people without a membership."
+
+my_membership_label:
+  default: "My membership"
+  description: "Link text for people with a membership."
+
+new_membership_url:
+  default: "/s"
+  description: "Where 'New membership' goes: /s for the subscriptions plugin's product page, or /s/subscriptions if the pricing table is turned on."
+
+# ── Library Manager (librarians only) ────────────────────────────────────────
+librarian_category_slug:
+  default: "library-manager"
+  description: "Slug of the librarians-only category whose page shows the Library Manager app instead of a topic list. Leave blank to turn this off. Who can open it is set by the category's Security settings."
+
+librarian_app_url:
+  default: "https://script.google.com/macros/s/AKfycbykZprOi_Fo5nAPckXGKfNUc-ejGEGpTnRKn2cNo3YPzSJ4SS2G3IhzW90gI-A6LY1n/exec"
+  description: "The Library Manager Apps Script web app URL (ends in /exec)."
+
+show_librarian_menu_link:
+  default: true
+  description: "Add a 'Library Manager' link to the menu for people who can see the librarians category."

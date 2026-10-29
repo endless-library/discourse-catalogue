@@ -1,6 +1,8 @@
+import { service } from "@ember/service";
 import { apiInitializer } from "discourse/lib/api";
 import ElCatalogueHeaderLinks from "../components/el-catalogue-header-links";
 import store, { catalogueUrl } from "../lib/catalogue-store";
+import { membershipLink } from "../lib/membership";
 
 export default apiInitializer((api) => {
   // A full page load of /c/catalogue?view=collections (e.g. a shared link or
@@ -11,7 +13,8 @@ export default apiInitializer((api) => {
     store.setView(view);
   }
 
-  if (settings.show_header_links) {
+  // One header nav holds both the catalogue links and the membership link.
+  if (settings.show_header_links || settings.show_membership_link) {
     api.renderInOutlet("before-header-panel", ElCatalogueHeaderLinks);
   }
 
@@ -23,6 +26,65 @@ export default apiInitializer((api) => {
       text: "Library catalogue",
       icon: "book",
     });
+  }
+
+  // "New membership" / "My membership" in the menu as well (phones open the
+  // menu more often than they scan the header).
+  if (settings.show_membership_link) {
+    api.addCommunitySectionLink(
+      (BaseSectionLink) =>
+        class extends BaseSectionLink {
+          get name() {
+            return "library-membership";
+          }
+          get href() {
+            return membershipLink(this.currentUser).href;
+          }
+          get title() {
+            return membershipLink(this.currentUser).member
+              ? "Manage your library membership"
+              : "Become a library member";
+          }
+          get text() {
+            return membershipLink(this.currentUser).label;
+          }
+          get defaultPrefixValue() {
+            return "id-card";
+          }
+        }
+    );
+  }
+
+  // "Library Manager" in the menu, only for people who can see the
+  // librarians category (Discourse only sends categories you can see).
+  if (settings.show_librarian_menu_link && settings.librarian_category_slug) {
+    api.addCommunitySectionLink(
+      (BaseSectionLink) =>
+        class extends BaseSectionLink {
+          @service site;
+
+          get name() {
+            return "library-manager";
+          }
+          get shouldDisplay() {
+            return (this.site.categories || []).some(
+              (c) => c.slug === settings.librarian_category_slug
+            );
+          }
+          get href() {
+            return catalogueUrl(settings.librarian_category_slug);
+          }
+          get title() {
+            return "Loans, members and access (librarians only)";
+          }
+          get text() {
+            return "Library Manager";
+          }
+          get defaultPrefixValue() {
+            return "screwdriver-wrench";
+          }
+        }
+    );
   }
 
   // Start downloading as soon as anyone lands on the site, so the catalogue

@@ -66,6 +66,21 @@ body.category-#{$category_slug} {
   display: none;
 }
 
+// Membership link: a filled pill for "New membership" (same look as the
+// subscriptions plugin's "Subscribe" button), a plain link for "My membership".
+.el-header-links .el-header-link--membership.is-new:not(.is-active) {
+  background: var(--tertiary);
+  color: var(--secondary);
+  font-weight: 600;
+  border-radius: 999px;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--tertiary-hover);
+    color: var(--secondary);
+  }
+}
+
 @media (max-width: 600px) {
   .el-header-links {
     padding-inline: 0.5rem;
@@ -84,9 +99,70 @@ body.category-#{$category_slug} {
   }
 }
 
-// Very narrow phones: no room at all; the menu link and home page list remain.
-@media (max-width: 360px) {
+// Phones: "New membership" / "My membership" may stack onto two short lines
+// so both links still fit beside the header icons.
+@media (max-width: 440px) {
   .el-header-links {
+    padding-inline: 0.25rem;
+    gap: 0.15rem;
+
+    .el-header-link {
+      font-size: var(--font-down-1);
+      padding: 0.35em 0.5em;
+    }
+
+    .el-header-link--membership {
+      white-space: normal;
+      text-align: center;
+      line-height: 1.1;
+      max-width: 7.5em;
+    }
+
+    .el-header-link--membership.is-new:not(.is-active) {
+      border-radius: 0.9em;
+    }
+  }
+}
+
+// Fit to the space that is actually free, not the screen width: the gap
+// between logo and header icons depends on the logo, whether someone is
+// logged in (anonymous visitors get Sign Up / Log In buttons), chat, etc.
+// The links' slot takes the free space and becomes a size container; links
+// then drop out in order of importance as it narrows. The catalogue stays in
+// the menu and the home page list; membership stays in the menu.
+.d-header:not(:has(.extra-info-wrapper)) .before-header-panel-outlet:has(.el-header-links) {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  height: 100%;
+}
+
+.el-header-links {
+  container: el-header-links / inline-size;
+  flex: 1 1 auto;
+}
+
+// Not enough room for "Browse books" + "Browse collections": one "Catalogue".
+@container el-header-links (max-width: 26rem) {
+  .el-header-links .el-header-link--wide {
+    display: none;
+  }
+
+  .el-header-links .el-header-link--mobile {
+    display: inline-block;
+  }
+}
+
+// Room for one link only: keep membership.
+@container el-header-links (max-width: 11rem) {
+  .el-header-links .el-header-link--mobile {
+    display: none;
+  }
+}
+
+// No room at all.
+@container el-header-links (max-width: 5.5rem) {
+  .el-header-links .el-header-link--membership {
     display: none;
   }
 }
@@ -742,5 +818,63 @@ body.category-#{$category_slug} {
     .el-book__cover {
       width: 9rem;
     }
+  }
+}
+
+// ── Library Manager (librarians-only category) ─────────────────────────────
+@if "#{$librarian_category_slug}" != "" {
+  body.category-#{$librarian_category_slug} {
+    .list-controls,
+    #header-list-area,
+    .discovery-layout__category-header,
+    .category-heading {
+      display: none;
+    }
+  }
+}
+
+.el-librarian {
+  padding: 0.5rem 0 1rem;
+}
+
+.el-librarian__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.el-librarian__hint {
+  margin: 0;
+  flex: 1 1 22rem;
+  font-size: var(--font-down-1);
+  color: var(--primary-medium);
+}
+
+.el-librarian__open {
+  flex-shrink: 0;
+}
+
+.el-librarian__frame {
+  display: block;
+  width: 100%;
+  // Fill the screen below the Discourse header; the app scrolls inside.
+  height: calc(100vh - var(--header-offset, 4rem) - 6rem);
+  height: calc(100dvh - var(--header-offset, 4rem) - 6rem);
+  min-height: 32rem;
+  border: 1px solid var(--primary-low);
+  border-radius: var(--d-border-radius, 4px);
+  background: #f6f3ee; // the app's own background, so loading isn't a white flash
+}
+
+@media (max-width: 600px) {
+  .el-librarian__frame {
+    // Edge to edge on phones: every pixel counts for the app's own layout.
+    width: calc(100% + 1.5rem);
+    margin-inline: -0.75rem;
+    border-inline: 0;
+    border-radius: 0;
   }
 }
