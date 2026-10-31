@@ -1,5 +1,6 @@
 import { service } from "@ember/service";
 import { apiInitializer } from "discourse/lib/api";
+import ElCatalogueHeaderLinks from "../components/el-catalogue-header-links";
 import store, { catalogueUrl } from "../lib/catalogue-store";
 import { membershipLink } from "../lib/membership";
 
@@ -12,8 +13,11 @@ export default apiInitializer((api) => {
     store.setView(view);
   }
 
-  // The header links themselves are connectors: connectors/home-logo-wrapper
-  // (beside the logo) and connectors/after-header (the phones' second row).
+  // Header links beside the logo (computers/tablets). The phones' second row
+  // is a connector: connectors/after-header.
+  if (settings.show_header_links || settings.show_membership_link || settings.show_media_link) {
+    api.renderInOutlet("before-header-panel", ElCatalogueHeaderLinks);
+  }
 
   if (settings.show_menu_link) {
     api.addCommunitySectionLink({

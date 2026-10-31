@@ -23,9 +23,9 @@ body.category-#{$category_slug} {
 }
 
 // ── Header links ────────────────────────────────────────────────────────────
-// Computers and tablets: one group straight after the logo, inside the logo's
-// own slot (connectors/home-logo-wrapper), so nothing else in the header can
-// push it away. Phones: a second header row (connectors/after-header).
+// Computers and tablets: one group straight after the logo (in the
+// before-header-panel outlet, pulled up against the logo below). Phones: a
+// second header row (connectors/after-header).
 .el-header-links {
   display: flex;
   align-items: center;
@@ -53,13 +53,23 @@ body.category-#{$category_slug} {
   }
 }
 
-// Beside the logo
-.d-header .home-logo-wrapper-outlet:has(.el-header-links--inline) {
-  display: flex;
-  align-items: center;
-  height: 100%;
-  flex: 0 1 auto;
-  min-width: 0;
+// Beside the logo: the logo keeps its natural size, and the links' slot takes
+// the space between it and the icons, links packed to the left.
+.d-header .contents:has(.el-header-links--inline) {
+  .home-logo-wrapper-outlet {
+    flex: 0 0 auto;
+    margin-right: 0;
+  }
+
+  .before-header-panel-outlet {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100%;
+    margin-left: 0;
+  }
 }
 
 .el-header-links--inline {
@@ -112,7 +122,6 @@ body.category-#{$category_slug} {
   .el-header-row {
     display: block;
     width: 100%;
-    border-top: 1px solid var(--primary-low);
   }
 
   .el-header-links--row {

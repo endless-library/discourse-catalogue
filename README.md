@@ -139,11 +139,11 @@ Apps Script; the new tab avoids that too.
   the catalogue category and for the Library Manager on the librarians
   category. Every other category renders normally. (It's a wrapper outlet,
   which only takes one connector, so both swaps live in this one component.)
-- The header links render in two connectors: `home-logo-wrapper` (a wrapper
-  outlet around the logo, so the links always sit right after it) and
-  `after-header` (the phones' second row; Discourse measures the header's
-  height, so the page moves down to fit it). The row is left out while a
-  topic's title is docked in the header.
+- The header links render in the `before-header-panel` outlet (CSS pulls it
+  up against the logo) and, on phones, a second row in the `after-header`
+  connector (Discourse measures the header's height, so the page moves down
+  to fit it). The row is left out while a topic's title is docked in the
+  header.
 - Membership is read from `currentUser.groups`, so the link costs no extra
   request.
 - `common.scss` hides the category title bar and Latest/Top buttons on that
@@ -161,7 +161,6 @@ common/common.scss                         styles
 javascripts/discourse/
   api-initializers/el-catalogue.js         header links, menu links, warm-up download
   connectors/discovery-list-area/          puts the catalogue on the category page
-  connectors/home-logo-wrapper/            header links beside the logo
   connectors/after-header/                 phones' second header row
   components/el-catalogue.gjs              the catalogue page
   components/el-book-modal.gjs             book detail window
