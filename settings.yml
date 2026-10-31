@@ -8,7 +8,7 @@ category_slug:
 
 show_header_links:
   default: true
-  description: "Show the two catalogue links in the site header. While they are shown, the page's own Books / Collections tabs only appear on phones."
+  description: "Show the catalogue links in the site header (Browse books / Browse collections beside the logo; one link in the phones' second row). While they are shown, the page's own Books / Collections tabs only appear on phones."
 
 books_label:
   default: "Browse books"
@@ -20,7 +20,7 @@ collections_label:
 
 mobile_label:
   default: "Catalogue"
-  description: "On phones the header has room for one link, which uses this label and opens the catalogue (with its books / collections tabs)."
+  description: "Label of the single catalogue link in the phones' second header row (and on narrow screens beside the logo). It opens the catalogue with its books / collections tabs."
 
 show_menu_link:
   default: true
@@ -71,3 +71,16 @@ librarian_app_url:
 show_librarian_menu_link:
   default: true
   description: "Add a 'Library Manager' link to the menu for people who can see the librarians category."
+
+# ── Media link ───────────────────────────────────────────────────────────────
+show_media_link:
+  default: true
+  description: "Add a Media link to the header group (after Membership beside the logo; in the phones' second row). Turn off the Media gallery component's own 'show header link' setting so it isn't shown twice."
+
+media_label:
+  default: "Media"
+  description: "Label for the Media link."
+
+media_category_slug:
+  default: "archive"
+  description: "Slug of the media gallery's category."

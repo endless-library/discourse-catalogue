@@ -1,6 +1,5 @@
 import { service } from "@ember/service";
 import { apiInitializer } from "discourse/lib/api";
-import ElCatalogueHeaderLinks from "../components/el-catalogue-header-links";
 import store, { catalogueUrl } from "../lib/catalogue-store";
 import { membershipLink } from "../lib/membership";
 
@@ -13,10 +12,8 @@ export default apiInitializer((api) => {
     store.setView(view);
   }
 
-  // One header nav holds both the catalogue links and the membership link.
-  if (settings.show_header_links || settings.show_membership_link) {
-    api.renderInOutlet("before-header-panel", ElCatalogueHeaderLinks);
-  }
+  // The header links themselves are connectors: connectors/home-logo-wrapper
+  // (beside the logo) and connectors/after-header (the phones' second row).
 
   if (settings.show_menu_link) {
     api.addCommunitySectionLink({

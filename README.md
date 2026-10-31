@@ -6,9 +6,11 @@ no iframe: Discourse downloads the catalogue JSON and renders it itself.
 
 What visitors get:
 
-- **Browse books** and **Browse collections** links in the site header (one
-  *Catalogue* link on phones, where there's only room for one) and a *Library
-  catalogue* link in the menu.
+- One group of header links straight after the logo: **Browse books**,
+  **Browse collections**, **Membership**, **Media** (on narrower screens the
+  first two become one *Catalogue* link). On phones they move to a second
+  header row: *Catalogue · Media · Membership*. Plus a *Library catalogue*
+  link in the menu.
 - A catalogue page at `/c/catalogue` with tabs for books and collections, live
   search as you type, advanced search, covers or list view, sortable columns,
   and a detail window for each book. Clicking a tag in the detail window
@@ -84,11 +86,12 @@ deploy key, which Discourse walks you through.)
 3. If the subscriptions plugin's pricing table is on, set
    `new_membership_url` to `/s/subscriptions`.
 
-The link shows on phones down to the narrowest screens. The header's free
-space decides what fits: *Browse books / Browse collections* collapse to
-*Catalogue*, then *Catalogue* drops out (it's still in the menu), and
-anonymous visitors on small phones may only have room for *Sign Up* — the
-menu link covers them.
+On phones the membership link is in the second header row, so it's always
+visible, logged in or not.
+
+The subscriptions plugin's own *Subscribe* tab in the topic list nav can be
+turned off with the site setting `discourse subscriptions extra nav
+subscribe`, since the header link replaces it.
 
 ### 4. Library Manager (librarians only)
 
@@ -120,6 +123,7 @@ Apps Script; the new tab avoids that too.
 | `books_label`, `collections_label` | Header link and tab wording. |
 | `mobile_label` | The single header link shown on phones (default *Catalogue*). |
 | `show_menu_link` | Add *Library catalogue* to the menu's Community section. |
+| `show_media_link`, `media_label`, `media_category_slug` | The Media link in the header group (turn off the Media gallery component's own header link). |
 | `refresh_after_minutes` | How old a visitor's saved copy can get before it is refreshed in the background. |
 | `show_membership_link` | Membership link in the header and menu. |
 | `membership_group` | Group whose members see *My membership*. |
@@ -135,6 +139,11 @@ Apps Script; the new tab avoids that too.
   the catalogue category and for the Library Manager on the librarians
   category. Every other category renders normally. (It's a wrapper outlet,
   which only takes one connector, so both swaps live in this one component.)
+- The header links render in two connectors: `home-logo-wrapper` (a wrapper
+  outlet around the logo, so the links always sit right after it) and
+  `after-header` (the phones' second row; Discourse measures the header's
+  height, so the page moves down to fit it). The row is left out while a
+  topic's title is docked in the header.
 - Membership is read from `currentUser.groups`, so the link costs no extra
   request.
 - `common.scss` hides the category title bar and Latest/Top buttons on that
@@ -152,6 +161,8 @@ common/common.scss                         styles
 javascripts/discourse/
   api-initializers/el-catalogue.js         header links, menu links, warm-up download
   connectors/discovery-list-area/          puts the catalogue on the category page
+  connectors/home-logo-wrapper/            header links beside the logo
+  connectors/after-header/                 phones' second header row
   components/el-catalogue.gjs              the catalogue page
   components/el-book-modal.gjs             book detail window
   components/el-catalogue-header-links.gjs header links (catalogue + membership)
