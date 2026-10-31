@@ -66,21 +66,6 @@ body.category-#{$category_slug} {
   display: none;
 }
 
-// Membership link: a filled pill for "New membership" (same look as the
-// subscriptions plugin's "Subscribe" button), a plain link for "My membership".
-.el-header-links .el-header-link--membership.is-new:not(.is-active) {
-  background: var(--tertiary);
-  color: var(--secondary);
-  font-weight: 600;
-  border-radius: 999px;
-
-  &:hover,
-  &:focus-visible {
-    background: var(--tertiary-hover);
-    color: var(--secondary);
-  }
-}
-
 @media (max-width: 600px) {
   .el-header-links {
     padding-inline: 0.5rem;
@@ -116,10 +101,6 @@ body.category-#{$category_slug} {
       text-align: center;
       line-height: 1.1;
       max-width: 7.5em;
-    }
-
-    .el-header-link--membership.is-new:not(.is-active) {
-      border-radius: 0.9em;
     }
   }
 }
