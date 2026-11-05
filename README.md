@@ -93,25 +93,47 @@ The subscriptions plugin's own *Subscribe* tab in the topic list nav can be
 turned off with the site setting `discourse subscriptions extra nav
 subscribe`, since the header link replaces it.
 
-### 4. Library Manager (librarians only)
+### 4. Library Manager (librarians) and My loans (members)
 
-1. New category *Library Manager*, slug `library-manager`. Under Security,
-   **remove `everyone`** and give only the librarians group **See** (staff
-   always have access). Its topic list is replaced by the app, so use a new
-   category rather than an existing discussion one.
-2. Check `librarian_app_url` points at the Library Manager deployment.
+Both pages are native Discourse pages, styled like the catalogue. They talk to
+the library's Apps Script (`LibraryApi.gs`), and Discourse vouches for who's
+signed in using **DiscourseConnect**. Nobody needs a Google sign-in, and it
+works on iPhones.
 
-Who can open the page is Discourse's category security; the app then checks
-the visitor's Google account against the Access sheet as it always has. The
-URL itself isn't secret (it's in the theme's JavaScript), so the Access
-sheet is still what actually protects the data.
+**Library Manager**: Lend (find the member → find books → lend), Loans
+(return, renew, overdue) and Members (search, add, edit, *Sync from forum*).
+Access and the collection owners' tools stay in the full Google app, linked
+from the page.
+**My loans**: what the visitor has out, due dates, Renew, and their
+borrowing history.
 
-The app runs as the visiting Google account, so librarians need to be
-signed in to Google in the same browser. Safari, every iPhone browser and
-Firefox's strict mode block Google sign-in inside embedded pages; there the
-frame shows blank or loops, and the *Open in new tab* button above it is the
-way in. Being signed in to several Google accounts at once can also confuse
-Apps Script; the new tab avoids that too.
+Setup, once:
+
+1. Make up a long random secret (40+ letters and numbers).
+2. Discourse → Admin → Settings:
+   - `enable discourse connect provider`: ticked
+   - `discourse connect provider secrets`: add
+     `shush.endlesslibrary.com.au|<secret>`
+   - `discourse connect provider claims map`: make sure **email**,
+     **groups** and **admin** are included.
+3. Apps Script → Project Settings → Script properties: add
+   `DISCOURSE_CONNECT_SECRET` = the same secret. Push, then publish a new
+   version of the **Execute as: Me / Anyone** deployment (the one in
+   `data_url`).
+4. Categories:
+   - *Library Manager*, slug `library-manager`: Security → remove
+     *everyone*, give **Librarians** See.
+   - *My loans*, slug `my-loans`: Security → *everyone* See, staff Create
+     (the page only ever shows the signed-in person their own loans).
+
+The library server checks again on every request: desk actions need the
+Librarians group (or forum admin), and members only ever get their own
+loans, matched by forum account and then email.
+
+Sign-in is a quick hop through `/session/sso_provider` the first time the
+page opens. It's good for 6 hours, then it repeats invisibly on the next
+visit. If someone uses two-factor login, Discourse doesn't ask for it again
+here.
 
 ## Settings
 
@@ -130,14 +152,16 @@ Apps Script; the new tab avoids that too.
 | `new_membership_label`, `my_membership_label` | The two link texts. |
 | `new_membership_url` | Where *New membership* goes (`/s`, or `/s/subscriptions` with the pricing table). *My membership* always goes to the user's billing → subscriptions page. |
 | `librarian_category_slug` | Category that shows the Library Manager (blank turns it off). |
-| `librarian_app_url` | The Library Manager's `/exec` URL. |
-| `show_librarian_menu_link` | *Library Manager* menu link for people who can see that category. |
+| `my_loans_category_slug` | Category that shows My loans (blank turns it off). |
+| `manager_api_url` | Library server for those pages; blank = the `data_url` deployment. Must be *Execute as: Me / Anyone*. |
+| `librarian_app_url` | The full Google app, linked from the Library Manager page. |
+| `show_librarian_menu_link`, `show_my_loans_link` | Menu links for those pages. |
 
 ## How it hooks into Discourse
 
 - `connectors/discovery-list-area/` swaps the topic list for the catalogue on
-  the catalogue category and for the Library Manager on the librarians
-  category. Every other category renders normally. (It's a wrapper outlet,
+  the catalogue category, the Library Manager on the librarians category
+  and My loans on the my-loans category. Every other category renders normally. (It's a wrapper outlet,
   which only takes one connector, so both swaps live in this one component.)
 - The header links render in the `before-header-panel` outlet (CSS pulls it
   up against the logo) and, on phones, a second row in the `after-header`
@@ -165,8 +189,10 @@ javascripts/discourse/
   components/el-catalogue.gjs              the catalogue page
   components/el-book-modal.gjs             book detail window
   components/el-catalogue-header-links.gjs header links (catalogue + membership)
-  components/el-librarian-app.gjs          Library Manager embed
+  components/el-library-manager.gjs        Library Manager (Lend · Loans · Members)
+  components/el-my-loans.gjs               My loans
   lib/catalogue-store.js                   download + local caching, shared view state
   lib/catalogue-data.js                    search, sorting, collection matching
   lib/membership.js                        New / My membership logic
+  lib/library-api.js                       DiscourseConnect sign-in + library server calls
 ```

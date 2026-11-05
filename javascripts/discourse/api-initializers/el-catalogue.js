@@ -2,9 +2,14 @@ import { service } from "@ember/service";
 import { apiInitializer } from "discourse/lib/api";
 import ElCatalogueHeaderLinks from "../components/el-catalogue-header-links";
 import store, { catalogueUrl } from "../lib/catalogue-store";
+import { captureSsoReturn } from "../lib/library-api";
 import { membershipLink } from "../lib/membership";
 
 export default apiInitializer((api) => {
+  // Coming back from signing in to the Library Manager / My loans pages:
+  // pick up ?sso=…&sig=… before Discourse's router drops them.
+  captureSsoReturn();
+
   // A full page load of /c/catalogue?view=collections (e.g. a shared link or
   // a new tab) opens on that view. Read it now, before Discourse's router
   // strips the unknown query parameter.
@@ -83,6 +88,33 @@ export default apiInitializer((api) => {
           }
           get defaultPrefixValue() {
             return "screwdriver-wrench";
+          }
+        }
+    );
+  }
+
+  // "My loans" in the menu for anyone logged in.
+  if (settings.show_my_loans_link && settings.my_loans_category_slug) {
+    api.addCommunitySectionLink(
+      (BaseSectionLink) =>
+        class extends BaseSectionLink {
+          get name() {
+            return "library-my-loans";
+          }
+          get shouldDisplay() {
+            return !!this.currentUser;
+          }
+          get href() {
+            return catalogueUrl(settings.my_loans_category_slug);
+          }
+          get title() {
+            return "Books you've borrowed from the library";
+          }
+          get text() {
+            return "My loans";
+          }
+          get defaultPrefixValue() {
+            return "book-open-reader";
           }
         }
     );

@@ -35,7 +35,7 @@ refresh_after_minutes:
 svg_icons:
   type: list
   list_type: compact
-  default: "book|id-card|screwdriver-wrench|up-right-from-square"
+  default: "book|id-card|screwdriver-wrench|up-right-from-square|book-open-reader"
   description: "Icons this component uses, so Discourse includes them in the icon set."
 
 # ── Membership link ──────────────────────────────────────────────────────────
@@ -59,18 +59,30 @@ new_membership_url:
   default: "/s"
   description: "Where 'New membership' goes: /s for the subscriptions plugin's product page, or /s/subscriptions if the pricing table is turned on."
 
-# ── Library Manager (librarians only) ────────────────────────────────────────
+# ── Library Manager (librarians) and My loans (everyone signed in) ─────────
 librarian_category_slug:
   default: "library-manager"
-  description: "Slug of the librarians-only category whose page shows the Library Manager app instead of a topic list. Leave blank to turn this off. Who can open it is set by the category's Security settings."
+  description: "Slug of the librarians-only category whose page shows the Library Manager (Lend · Loans · Members) instead of a topic list. Leave blank to turn this off. Who can open it is set by the category's Security settings; the library server also checks the visitor is in the Librarians group."
+
+my_loans_category_slug:
+  default: "my-loans"
+  description: "Slug of the category whose page shows the visitor's own loans (with Renew). Leave blank to turn this off."
+
+manager_api_url:
+  default: ""
+  description: "Library server address for these pages: the /exec URL of the Apps Script deployment set to 'Execute as: Me, Who has access: Anyone'. Leave blank to use the same deployment as data_url (the catalogue)."
 
 librarian_app_url:
   default: "https://script.google.com/macros/s/AKfycbykZprOi_Fo5nAPckXGKfNUc-ejGEGpTnRKn2cNo3YPzSJ4SS2G3IhzW90gI-A6LY1n/exec"
-  description: "The Library Manager Apps Script web app URL (ends in /exec)."
+  description: "The full Library Manager Google app (ends in /exec), linked from the Library Manager page for things that page doesn't do (Access, collection owners' tools)."
 
 show_librarian_menu_link:
   default: true
   description: "Add a 'Library Manager' link to the menu for people who can see the librarians category."
+
+show_my_loans_link:
+  default: true
+  description: "Add a 'My loans' link to the menu for logged-in people."
 
 # ── Media link ───────────────────────────────────────────────────────────────
 show_media_link:
