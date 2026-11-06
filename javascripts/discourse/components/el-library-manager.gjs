@@ -6,13 +6,17 @@ import { action } from "@ember/object";
 import { service } from "@ember/service";
 import store from "../lib/catalogue-store";
 import auth, {
+  coverOf,
   dueText,
   formatDate,
   isOverdue,
   LibraryAuthError,
   loanKey,
+  readCachedBooks,
   renewalsLeft,
+  writeCachedBooks,
 } from "../lib/library-api";
+import ElReadingBook from "./el-reading-book";
 
 // The librarians' desk, native in Discourse: Lend · Loans · Members.
 // Everything goes through LibraryApi.gs, which applies the same rules as the
@@ -24,6 +28,23 @@ const concatKey = (a, b) => `${a}${b}`;
 const MEMBER_LIMIT = 8;
 const BOOK_LIMIT = 25;
 const LOAN_LIMIT = 100;
+
+// What the reading book says while a lend is in progress (it's one request,
+// so these just take turns rather than tracking real steps).
+const LEND_STAGES = ["Checking the shelves…", "Stamping the due dates…", "Writing it in the ledger…"];
+
+const BUSY_LABELS = {
+  sync: "Checking the forum for new members…",
+  save: "Saving…",
+};
+
+function prepareBooks(books) {
+  return books.map((book) => ({
+    ...book,
+    _hay: [book.title, book.author, book.isbn, book.collection].join(" ").toLowerCase(),
+    _loanKey: loanKey(book.isbn, book.title, book.collection),
+  }));
+}
 
 function words(q) {
   return String(q || "")
@@ -55,6 +76,9 @@ export default class ElLibraryManager extends Component {
   @tracked busy = null;
   @tracked notice = null; // { kind: "ok" | "error" | "warn", text }
   @tracked expired = false;
+  @tracked stage = "Opening the library…";
+  @tracked booksError = null;
+  @tracked lendStage = LEND_STAGES[0];
 
   // Lend
   @tracked memberQuery = "";
@@ -83,6 +107,7 @@ export default class ElLibraryManager extends Component {
     this.loading = true;
     this.loadError = null;
     this.expired = false;
+    this.stage = "Opening the library…";
     const ready = await auth.ensure(this.currentUser);
     if (!ready) {
       this.loading = false;
@@ -95,22 +120,49 @@ export default class ElLibraryManager extends Component {
     }
     // Covers come from the public catalogue the site already downloads.
     store.ensureLoaded(settings.data_url, settings.refresh_after_minutes);
+
+    // Last time's book list, so Lend works straight away; refreshed below.
+    const cached = readCachedBooks();
+    if (cached) {
+      this.books = prepareBooks(cached);
+    }
+    this.loadBooks();
+
+    this.stage = "Fetching members and loans…";
     try {
-      const [s, b] = await Promise.all([auth.call("state"), auth.call("books")]);
-      if (!s.ok || !b.ok) {
-        throw new Error(s.error || b.error || "Couldn't load the library.");
+      const s = await auth.call("state");
+      if (!s.ok) {
+        throw new Error(s.error || "Couldn't load the library.");
       }
       this.applyState(s.state);
-      this.books = b.books.map((book) => ({
-        ...book,
-        _hay: [book.title, book.author, book.isbn, book.collection].join(" ").toLowerCase(),
-        _loanKey: loanKey(book.isbn, book.title, book.collection),
-      }));
     } catch (e) {
       this.handleError(e, true);
     } finally {
       this.loading = false;
     }
+  }
+
+  async loadBooks() {
+    this.booksError = null;
+    try {
+      const b = await auth.call("books");
+      if (!b.ok) {
+        throw new Error(b.error || "Couldn't load the book list.");
+      }
+      this.books = prepareBooks(b.books);
+      writeCachedBooks(b.books);
+    } catch (e) {
+      if (e instanceof LibraryAuthError) {
+        this.expired = true;
+      } else if (!this.books) {
+        this.booksError = e.message || String(e);
+      }
+    }
+  }
+
+  @action
+  retryBooks() {
+    this.loadBooks();
   }
 
   applyState(state) {
@@ -224,12 +276,7 @@ export default class ElLibraryManager extends Component {
   }
 
   coverFor(item) {
-    // Reading store.books ties this to the catalogue download finishing.
-    if (!store.books) {
-      return null;
-    }
-    const book = store.byKey ? store.findBook({ isbn: item.isbn, title: item.title, author: item.author || "" }) : null;
-    return book && book._hasCover ? book.coverUrl : null;
+    return coverOf(item);
   }
 
   // ── Tabs ──────────────────────────────────────────────────────────────────
@@ -395,10 +442,21 @@ export default class ElLibraryManager extends Component {
       return;
     }
     const titles = new Map(this.basket.map((b) => [b.key, b.title]));
-    const r = await this.run("lend", "lend", {
-      memberId: this.lendMemberId,
-      bookKeys: this.basket.map((b) => b.key),
-    });
+    let i = 0;
+    this.lendStage = LEND_STAGES[0];
+    const timer = setInterval(() => {
+      i = Math.min(i + 1, LEND_STAGES.length - 1);
+      this.lendStage = LEND_STAGES[i];
+    }, 2500);
+    let r;
+    try {
+      r = await this.run("lend", "lend", {
+        memberId: this.lendMemberId,
+        bookKeys: this.basket.map((b) => b.key),
+      });
+    } finally {
+      clearInterval(timer);
+    }
     if (!r?.result?.results) {
       return;
     }
@@ -576,6 +634,29 @@ export default class ElLibraryManager extends Component {
     return settings.librarian_app_url;
   }
 
+  get booksLoadingFirstTime() {
+    return !this.books && !this.booksError;
+  }
+
+  get stageLabel() {
+    if (auth.status === "redirecting") {
+      return "Signing in through the forum…";
+    }
+    if (auth.status === "checking") {
+      return "Signing in…";
+    }
+    return this.stage;
+  }
+
+  get isLending() {
+    return this.busy === "lend";
+  }
+
+  // Sync and saving can take a few seconds; renew/return show on their buttons.
+  get busyLabel() {
+    return BUSY_LABELS[this.busy] || null;
+  }
+
   get signingIn() {
     return ["checking", "redirecting"].includes(auth.status) || (this.loading && !this.loadError);
   }
@@ -613,7 +694,7 @@ export default class ElLibraryManager extends Component {
           <button type="button" class="el-btn" {{on "click" this.signInAgain}}>Try again</button>
         </div>
       {{else if this.signingIn}}
-        <div class="el-state"><p>Opening the library…</p></div>
+        <ElReadingBook @label={{this.stageLabel}} />
       {{else}}
         <div class="el-tabs" role="tablist" aria-label="Library Manager">
           <button type="button" role="tab" class="el-tab {{if this.isLend 'is-active'}}"
@@ -627,7 +708,9 @@ export default class ElLibraryManager extends Component {
             aria-selected={{if this.isMembers "true" "false"}} {{on "click" (fn this.setTab "members")}}>Members</button>
         </div>
 
-        {{#if this.notice}}
+        {{#if this.busyLabel}}
+          <ElReadingBook @inline={{true}} @label={{this.busyLabel}} />
+        {{else if this.notice}}
           <div class="el-notice is-{{this.notice.kind}}" role="status">
             <span>{{this.notice.text}}</span>
             <button type="button" class="el-notice__close" aria-label="Dismiss" {{on "click" this.dismissNotice}}>✕</button>
@@ -684,6 +767,15 @@ export default class ElLibraryManager extends Component {
 
             <section class="el-step">
               <h2 class="el-step__title"><span class="el-step__n">2</span> Which books?</h2>
+              {{#if this.booksError}}
+                <p class="el-hint el-hint--warn">
+                  {{this.booksError}}
+                  <button type="button" class="el-linkbtn" {{on "click" this.retryBooks}}>Try again</button>
+                </p>
+              {{/if}}
+              {{#if this.booksLoadingFirstTime}}
+                <ElReadingBook @inline={{true}} @label="Fetching the book list…" />
+              {{/if}}
               <div class="el-search__bar">
                 <input type="search" class="el-search__input" placeholder="Title, author or ISBN…"
                   aria-label="Find a book" autocomplete="off" value={{this.bookQuery}}
@@ -737,6 +829,9 @@ export default class ElLibraryManager extends Component {
               {{#if this.lendLimitWarning}}<p class="el-hint el-hint--warn">{{this.lendLimitWarning}}</p>{{/if}}
               <button type="button" class="el-btn el-btn--primary" disabled={{if this.canLend false true}}
                 {{on "click" this.lend}}>{{this.lendButtonLabel}}</button>
+              {{#if this.isLending}}
+                <ElReadingBook @inline={{true}} @label={{this.lendStage}} />
+              {{/if}}
               {{#if this.lendResults}}
                 <ul class="el-results">
                   {{#each this.lendResults as |r|}}

@@ -5,8 +5,9 @@ import { on } from "@ember/modifier";
 import { action } from "@ember/object";
 import { service } from "@ember/service";
 import store from "../lib/catalogue-store";
-import auth, { dueText, formatDate, isOverdue, LibraryAuthError, renewalsLeft } from "../lib/library-api";
+import auth, { dueText, findCatalogueBook, formatDate, isOverdue, LibraryAuthError, renewalsLeft } from "../lib/library-api";
 import { membershipLink } from "../lib/membership";
+import ElReadingBook from "./el-reading-book";
 
 // "My loans" for anyone signed in to the forum: what they have out, when it's
 // due, and a Renew button (same renewal rules as the Google app). Matched to
@@ -75,6 +76,16 @@ export default class ElMyLoans extends Component {
     this.start();
   }
 
+  get stageLabel() {
+    if (auth.status === "redirecting") {
+      return "Signing in through the forum…";
+    }
+    if (auth.status === "checking") {
+      return "Signing in…";
+    }
+    return "Fetching your loans…";
+  }
+
   get anonymous() {
     return !this.currentUser;
   }
@@ -96,8 +107,7 @@ export default class ElMyLoans extends Component {
   }
 
   decorate(l) {
-    // Reading store.books ties covers to the catalogue download finishing.
-    const book = store.books && store.byKey ? store.findBook({ isbn: l.isbn, title: l.title, author: "" }) : null;
+    const book = findCatalogueBook(l);
     const left = renewalsLeft(l, this.rules);
     return {
       ...l,
@@ -194,7 +204,7 @@ export default class ElMyLoans extends Component {
           <button type="button" class="el-btn" {{on "click" this.signInAgain}}>Try again</button>
         </div>
       {{else if this.loading}}
-        <div class="el-state"><p>Fetching your loans…</p></div>
+        <ElReadingBook @label={{this.stageLabel}} />
       {{else if this.member}}
         <p class="el-myloans__hello">Hi {{this.firstName}}. {{this.summary}}</p>
         {{#if this.lapsed}}
@@ -221,10 +231,10 @@ export default class ElMyLoans extends Component {
                 <span class="el-myloan__title">{{l.title}}</span>
                 {{#if l.author}}<span class="el-myloan__author">{{l.author}}</span>{{/if}}
                 <span class="el-myloan__due"><strong>{{l.due}}</strong><br />{{l.dueDate}}</span>
-                {{#if l.canRenew}}
-                  <button type="button" class="el-btn" disabled={{this.busy}} {{on "click" (fn this.renew l)}}>
-                    {{if l.renewing "Renewing…" "Renew"}}
-                  </button>
+                {{#if l.renewing}}
+                  <ElReadingBook @inline={{true}} @label="Renewing…" />
+                {{else if l.canRenew}}
+                  <button type="button" class="el-btn" disabled={{this.busy}} {{on "click" (fn this.renew l)}}>Renew</button>
                   <span class="el-myloan__left">{{l.renewalsLeft}} renewal{{if (eqOne l.renewalsLeft) "" "s"}} left</span>
                 {{else}}
                   <span class="el-myloan__left">No renewals left — please return it by the due date.</span>

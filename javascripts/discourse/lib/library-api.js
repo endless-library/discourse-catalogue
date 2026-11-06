@@ -1,4 +1,5 @@
 import { tracked } from "@glimmer/tracking";
+import store from "./catalogue-store";
 
 // Talks to the library's Apps Script (LibraryApi.gs) for the Library Manager
 // and My loans pages, and handles signing in through DiscourseConnect:
@@ -274,4 +275,58 @@ export function renewalsLeft(loan, defaults) {
 export function loanKey(isbn, title, collection) {
   const i = String(isbn || "").trim();
   return i ? `i:${i}` : `t:${String(title || "").trim()}|${String(collection || "").trim()}`;
+}
+
+// The catalogue record for a loan or lendable book, for its cover and author.
+// By ISBN (then title + author) like the catalogue does; failing that, by
+// title within the same collection, for copies that have no ISBN. Reads
+// store.books so callers re-render when the catalogue finishes downloading.
+export function findCatalogueBook(item) {
+  if (!store.books || !store.byKey || !item) {
+    return null;
+  }
+  const hit = store.findBook({ isbn: item.isbn, title: item.title, author: item.author || "" });
+  if (hit) {
+    return hit;
+  }
+  const title = String(item.title || "").trim().toLowerCase();
+  if (!title) {
+    return null;
+  }
+  const collection = String(item.collection || "").trim().toLowerCase();
+  const same = store.books.filter((b) => b.title.toLowerCase() === title);
+  return (
+    (collection && same.find((b) => b.collection.toLowerCase() === collection)) ||
+    (same.length === 1 ? same[0] : null)
+  );
+}
+
+export function coverOf(item) {
+  const b = findCatalogueBook(item);
+  return b && b._hasCover ? b.coverUrl : null;
+}
+
+// ── Book list cache ─────────────────────────────────────────────────────────
+// The lendable book list is public catalogue data (no member details), so it's
+// kept in localStorage: the Library Manager opens with it straight away and
+// refreshes it in the background.
+
+const BOOKS_KEY = "el-lib:books";
+
+export function readCachedBooks() {
+  try {
+    const raw = window.localStorage.getItem(BOOKS_KEY);
+    const v = raw && JSON.parse(raw);
+    return Array.isArray(v?.books) ? v.books : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeCachedBooks(books) {
+  try {
+    window.localStorage.setItem(BOOKS_KEY, JSON.stringify({ t: Date.now(), books }));
+  } catch {
+    // storage full or blocked: just no head start next time
+  }
 }

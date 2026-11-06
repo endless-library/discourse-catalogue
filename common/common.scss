@@ -1319,6 +1319,116 @@ a.el-btn {
   }
 }
 
+// ── Reading book (loading) ─────────────────────────────────────────────────
+// An open book whose right-hand pages keep turning over.
+.el-reading {
+  --el-reading-w: 4.5rem;
+  --el-reading-h: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem 0;
+  color: var(--el-muted, var(--primary-medium));
+}
+
+.el-reading--inline {
+  --el-reading-w: 2.6rem;
+  --el-reading-h: 1.75rem;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding: 0.6rem 0;
+}
+
+.el-reading__label {
+  font-family: var(--el-serif, Georgia, serif);
+  font-style: italic;
+}
+
+.el-reading--inline .el-reading__label {
+  font-size: var(--font-down-1);
+}
+
+.el-reading__book {
+  position: relative;
+  width: var(--el-reading-w);
+  height: var(--el-reading-h);
+  perspective: 20rem;
+
+  // left and right pages, with faint ruled lines
+  &::before,
+  &::after,
+  .el-reading__page {
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    box-sizing: border-box;
+    border: 1px solid var(--el-ink, var(--primary));
+    background-color: var(--el-bg, var(--secondary));
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 0.3rem,
+      var(--el-rule, var(--primary-low)) 0.3rem calc(0.3rem + 1px)
+    );
+    background-clip: content-box;
+    padding: 0.35rem 0.3rem;
+  }
+
+  &::before {
+    left: 0;
+    border-right-width: 0;
+    border-radius: 0.2rem 0 0 0.2rem;
+  }
+
+  &::after {
+    left: 50%;
+    border-radius: 0 0.2rem 0.2rem 0;
+  }
+
+  .el-reading__page {
+    left: 50%;
+    z-index: 1;
+    transform-origin: left center;
+    border-radius: 0 0.2rem 0.2rem 0;
+    animation: el-page-turn 3s ease-in-out infinite;
+
+    &:nth-child(2) {
+      animation-delay: 1s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 2s;
+    }
+  }
+}
+
+@keyframes el-page-turn {
+  0%,
+  10% {
+    transform: rotateY(0deg);
+    filter: brightness(1);
+  }
+
+  35% {
+    filter: brightness(0.9);
+  }
+
+  60%,
+  100% {
+    transform: rotateY(-180deg);
+    filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .el-reading__book .el-reading__page {
+    animation: none;
+  }
+}
+
 @media (max-width: 600px) {
   .el-page-head__title {
     font-size: var(--font-up-3);
