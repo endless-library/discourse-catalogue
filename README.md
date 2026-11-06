@@ -166,8 +166,8 @@ here.
 - The header links render in the `before-header-panel` outlet (CSS pulls it
   up against the logo) and, on phones, a second row in the `after-header`
   connector (Discourse measures the header's height, so the page moves down
-  to fit it). The row is left out while a topic's title is docked in the
-  header.
+  to fit it). The row stays put while a topic's title is docked in the header (hiding
+  it changed the header's height and made the header flicker).
 - Membership is read from `currentUser.groups`, so the link costs no extra
   request.
 - `common.scss` hides the category title bar and Latest/Top buttons on that
